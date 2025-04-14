@@ -5,13 +5,13 @@ import os
 import json
 import signal
 import sys
-app = Flask(__name__)
-CORS(app)  # Allow requests from Unity WebGL
+import copy
 
-# In-memory "database"
+app = Flask(__name__)
+CORS(app)
+
 behaviors = {}
 GENERATION_LIMIT = 5
-
 BEHAVIORS_FILE = os.path.join(os.path.dirname(__file__), 'behaviors.json')
 
 
@@ -19,11 +19,16 @@ def save_behaviors_to_file():
     with open(BEHAVIORS_FILE, 'w') as f:
         json.dump(behaviors, f)
 
+
 def load_behaviors_from_file():
     global behaviors
     if os.path.exists(BEHAVIORS_FILE):
         with open(BEHAVIORS_FILE, 'r') as f:
-            behaviors = json.load(f)
+            try:
+                behaviors = json.load(f)
+            except Exception as e:
+                print("❌ Failed to load behaviors:", e)
+                behaviors = {}
     else:
         behaviors = {}
 
@@ -52,50 +57,111 @@ def create_behavior(data):
 @app.route("/upload", methods=["POST"])
 def upload_behavior():
     data = request.get_json()
+    profile = data.get("profile")
+    if not profile:
+        return jsonify({"error": "Missing 'profile' field"}), 400
+
     behavior = create_behavior(data)
-    behaviors[behavior["id"]] = behavior
+    if profile not in behaviors:
+        behaviors[profile] = {}
+
+    behaviors[profile][behavior["id"]] = behavior
     save_behaviors_to_file()
     return jsonify({"status": "success", "id": behavior["id"]})
 
 
 @app.route("/get_all", methods=["GET"])
 def get_all_behaviors():
-    return jsonify(list(behaviors.values()))
+    profile = request.args.get("profile")
+    if not profile:
+        return jsonify({"error": "Missing 'profile' parameter"}), 400
+
+    if profile not in behaviors:
+        return jsonify([])
+
+    return jsonify(list(behaviors[profile].values()))
 
 
 @app.route("/mark_used", methods=["POST"])
 def mark_used():
-    used_ids = request.json.get("used_ids", [])
-    for b in behaviors.values():
+    data = request.get_json()
+    profile = data.get("profile")
+    used_ids = data.get("used_ids", [])
+
+    if not profile or profile not in behaviors:
+        return jsonify({"error": "Invalid or missing profile"}), 400
+
+    for b in behaviors[profile].values():
         if b["id"] in used_ids:
             b["unusedGenerations"] = 0
         else:
             b["unusedGenerations"] += 1
 
-    # Delete unused behaviors
-    to_delete = [bid for bid, b in behaviors.items() if b["unusedGenerations"] >= GENERATION_LIMIT]
+    to_delete = [bid for bid, b in behaviors[profile].items() if b["unusedGenerations"] >= GENERATION_LIMIT]
     for bid in to_delete:
-        del behaviors[bid]
+        del behaviors[profile][bid]
 
+    save_behaviors_to_file()
     return jsonify({"status": "updated", "deleted": to_delete})
+
 
 @app.route("/reset_unused_generations", methods=["POST"])
 def reset_unused_generations():
-    parent_ids = request.json.get("parent_ids", [])
-    updated = []
+    data = request.get_json()
+    profile = data.get("profile")
+    parent_ids = data.get("parent_ids", [])
 
+    if not profile or profile not in behaviors:
+        return jsonify({"error": "Invalid or missing profile"}), 400
+
+    updated = []
     for pid in parent_ids:
-        behavior = behaviors.get(pid)
+        behavior = behaviors[profile].get(pid)
         if behavior:
             behavior["unusedGenerations"] = 0
             updated.append(pid)
 
+    save_behaviors_to_file()
     return jsonify({"status": "success", "updated": updated})
 
-@app.route('/get_behavior_count', methods=['GET'])
+
+@app.route("/get_behavior_count", methods=["GET"])
 def get_behavior_count():
-    behavior_count = len(behaviors)
-    return jsonify({'behavior_count': behavior_count})
+    profile = request.args.get("profile")
+    if not profile or profile not in behaviors:
+        return jsonify({'behavior_count': 0})
+    return jsonify({'behavior_count': len(behaviors[profile])})
+
+
+@app.route("/get_profiles", methods=["GET"])
+def get_profiles():
+    try:
+        return jsonify({"profiles": list(behaviors.keys())})
+    except Exception as e:
+        print("❌ Error in get_profiles:", e)
+        return jsonify({"error": "Failed to get profiles"}), 500
+
+
+@app.route("/clone_profile", methods=["POST"])
+def clone_profile():
+    data = request.get_json()
+    source = data.get("source")
+    target = data.get("target")
+
+    if not source or not target:
+        return jsonify({"error": "Missing 'source' or 'target'"}), 400
+
+    if source not in behaviors:
+        return jsonify({"error": f"Source profile '{source}' not found"}), 404
+
+    if target in behaviors:
+        return jsonify({"error": f"Target profile '{target}' already exists"}), 400
+
+    behaviors[target] = copy.deepcopy(behaviors[source])
+    save_behaviors_to_file()
+
+    return jsonify({"status": "success", "profile": target})
+
 
 @app.route("/", methods=["GET"])
 def health_check():
@@ -107,9 +173,8 @@ def handle_exit(sig, frame):
     sys.exit(0)
 
 
-
 if __name__ == "__main__":
-    load_behaviors_from_file()  
+    load_behaviors_from_file()
     signal.signal(signal.SIGINT, handle_exit)
     signal.signal(signal.SIGTERM, handle_exit)
     app.run(host="0.0.0.0", port=5000)
