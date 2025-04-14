@@ -135,7 +135,7 @@ def get_behavior_count():
 
 @app.route("/get_profiles", methods=["GET"])
 def get_profiles():
-    return jsonify(list(behaviors.keys()))
+    return jsonify({"profiles": list(behaviors.keys())})
 
 
 @app.route("/clone_profile", methods=["POST"])
