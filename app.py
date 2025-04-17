@@ -168,6 +168,20 @@ def health_check():
 def handle_exit(sig, frame):
     sys.exit(0)
 
+@app.route("/delete_profile", methods=["POST"])
+def delete_profile():
+    data = request.get_json()
+    profile = data.get("profile")
+
+    if not profile:
+        return jsonify({"error": "Missing 'profile' field"}), 400
+
+    if profile not in behaviors:
+        return jsonify({"error": f"Profile '{profile}' not found"}), 404
+
+    del behaviors[profile]
+    return jsonify({"status": "success", "deleted": profile})
+
 
 if __name__ == "__main__":
     load_behaviors_from_file()
