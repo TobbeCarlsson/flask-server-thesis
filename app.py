@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 behaviors = {}
-GENERATION_LIMIT = 50
+GENERATION_LIMIT = 5
 BEHAVIORS_FILE = os.path.join(os.path.dirname(__file__), 'behaviors.json')
 
 
@@ -50,6 +50,7 @@ def create_behavior(data):
         "baseTurnAngle": data.get("baseTurnAngle"),
         "turnAngleRandomness": data.get("turnAngleRandomness"),
         "turnSpeed": data.get("turnSpeed"),
+        "generation": data.get("generation"),
         "unusedGenerations": 0
     }
 
