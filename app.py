@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 behaviors = {}
-GENERATION_LIMIT = 5
+GENERATION_LIMIT = 50
 BEHAVIORS_FILE = os.path.join(os.path.dirname(__file__), 'behaviors.json')
 
 
