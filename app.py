@@ -15,9 +15,9 @@ GENERATION_LIMIT = 5
 BEHAVIORS_FILE = os.path.join(os.path.dirname(__file__), 'behaviors.json')
 
 
-def save_behaviors_to_file():
-    with open(BEHAVIORS_FILE, 'w') as f:
-        json.dump(behaviors, f)
+# def save_behaviors_to_file():
+#     with open(BEHAVIORS_FILE, 'w') as f:
+#         json.dump(behaviors, f)
 
 
 def load_behaviors_from_file():
@@ -66,7 +66,6 @@ def upload_behavior():
         behaviors[profile] = {}
 
     behaviors[profile][behavior["id"]] = behavior
-    save_behaviors_to_file()
     return jsonify({"status": "success", "id": behavior["id"]})
 
 
@@ -101,7 +100,6 @@ def mark_used():
     for bid in to_delete:
         del behaviors[profile][bid]
 
-    save_behaviors_to_file()
     return jsonify({"status": "updated", "deleted": to_delete})
 
 
@@ -121,7 +119,6 @@ def reset_unused_generations():
             behavior["unusedGenerations"] = 0
             updated.append(pid)
 
-    save_behaviors_to_file()
     return jsonify({"status": "success", "updated": updated})
 
 
@@ -158,7 +155,6 @@ def clone_profile():
         return jsonify({"error": f"Target profile '{target}' already exists"}), 400
 
     behaviors[target] = copy.deepcopy(behaviors[source])
-    save_behaviors_to_file()
 
     return jsonify({"status": "success", "profile": target})
 
@@ -169,7 +165,6 @@ def health_check():
 
 
 def handle_exit(sig, frame):
-    save_behaviors_to_file()
     sys.exit(0)
 
 
