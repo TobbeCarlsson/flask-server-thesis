@@ -36,6 +36,7 @@ def load_behaviors_from_file():
 def create_behavior(data):
     return {
         "id": data.get("id"),
+        "displayname": data.get("displayname"),
         "smallDetectionRadius": data.get("smallDetectionRadius"),
         "largeDetectionRadius": data.get("largeDetectionRadius"),
         "fullStopRadius": data.get("fullStopRadius"),
@@ -51,7 +52,7 @@ def create_behavior(data):
         "turnAngleRandomness": data.get("turnAngleRandomness"),
         "turnSpeed": data.get("turnSpeed"),
         "generation": data.get("generation"),
-        "unusedGenerations": 0
+        "prio": data.get("prio")
     }
 
 
@@ -68,6 +69,27 @@ def upload_behavior():
 
     behaviors[profile][behavior["id"]] = behavior
     return jsonify({"status": "success", "id": behavior["id"]})
+
+@app.route("/update_behavior", methods=["POST"])
+def update_behavior():
+    data = request.get_json()
+    profile = data.get("profile")
+    behavior_id = data.get("id")  
+
+    if not profile or not behavior_id:
+        return jsonify({"error": "Missing 'profile' or 'id'"}), 400
+
+    if profile not in behaviors:
+        return jsonify({"error": f"Profile '{profile}' not found"}), 404
+
+    if behavior_id not in behaviors[profile]:
+        return jsonify({"error": f"Behavior ID '{behavior_id}' not found in profile '{profile}'"}), 404
+
+    # Replace the entire behavior entry with the new one
+    behaviors[profile][behavior_id] = create_behavior(data)
+
+    return jsonify({"status": "success", "updated": behavior_id})
+
 
 
 @app.route("/get_all", methods=["GET"])
@@ -181,6 +203,25 @@ def delete_profile():
 
     del behaviors[profile]
     return jsonify({"status": "success", "deleted": profile})
+
+@app.route("/delete_behavior", methods=["POST"])
+def delete_behavior():
+    data = request.get_json()
+    profile = data.get("profile")
+    behavior_id = data.get("behavior_id")
+
+    if not profile or not behavior_id:
+        return jsonify({"error": "Missing 'profile' or 'behavior_id'"}), 400
+
+    if profile not in behaviors:
+        return jsonify({"error": f"Profile '{profile}' not found"}), 404
+
+    if behavior_id not in behaviors[profile]:
+        return jsonify({"error": f"Behavior ID '{behavior_id}' not found in profile '{profile}'"}), 404
+
+    del behaviors[profile][behavior_id]
+    return jsonify({"status": "success", "deleted": behavior_id})
+
 
 
 if __name__ == "__main__":
