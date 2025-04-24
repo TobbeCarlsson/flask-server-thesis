@@ -208,7 +208,7 @@ def delete_profile():
 def delete_behavior():
     data = request.get_json()
     profile = data.get("profile")
-    behavior_id = data.get("behavior_id")
+    behavior_id = data.get("id")
 
     if not profile or not behavior_id:
         return jsonify({"error": "Missing 'profile' or 'behavior_id'"}), 400
