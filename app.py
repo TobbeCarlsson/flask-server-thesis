@@ -56,6 +56,7 @@ def create_behavior(data):
         "backDuration": data.get("backDuration"),
         "backOnPlayerProximity": data.get("backOnPlayerProximity"),
         "backProximityDistance": data.get("backProximityDistance"),
+        "backAfterStop": data.get("backAfterStop"),
         "generation": data.get("generation"),
         "prio": data.get("prio")
     }
