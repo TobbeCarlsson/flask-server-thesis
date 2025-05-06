@@ -51,9 +51,15 @@ def create_behavior(data):
         "baseTurnAngle": data.get("baseTurnAngle"),
         "turnAngleRandomness": data.get("turnAngleRandomness"),
         "turnSpeed": data.get("turnSpeed"),
+        "stuckMaxTurns": data.get("stuckMaxTurns"),
+        "turnAfterBackAngle": data.get("turnAfterBackAngle"),
+        "backDuration": data.get("backDuration"),
+        "backOnPlayerProximity": data.get("backOnPlayerProximity"),
+        "backProximityDistance": data.get("backProximityDistance"),
         "generation": data.get("generation"),
         "prio": data.get("prio")
     }
+
 
 
 @app.route("/upload", methods=["POST"])
