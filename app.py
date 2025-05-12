@@ -57,6 +57,12 @@ def create_behavior(data):
         "backOnPlayerProximity": data.get("backOnPlayerProximity"),
         "backProximityDistance": data.get("backProximityDistance"),
         "backAfterStop": data.get("backAfterStop"),
+        "enableShimmy": data.get("enableShimmy"),
+        "shimmyDistance": data.get("shimmyDistance"),
+        "shimmyDuration": data.get("shimmyDuration"),
+        "shimmyCooldown": data.get("shimmyCooldown"),
+        "shimmyAngle": data.get("shimmyAngle"),
+        "shimmySwitchInterval": data.get("shimmySwitchInterval"),
         "generation": data.get("generation"),
         "prio": data.get("prio")
     }
